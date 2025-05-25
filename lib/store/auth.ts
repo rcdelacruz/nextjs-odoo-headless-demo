@@ -10,8 +10,7 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (username: string, password: string): Promise<boolean> => {
         try {
-          console.log('🔐 Auth store: Starting login via Next.js API...');
-          console.log(`👤 Auth store: Username: ${username}`);
+          console.log('Auth: Starting login process for username:', username);
           
           // Use Next.js API route instead of direct Odoo call (fixes CORS)
           const response = await fetch('/api/auth/login', {
@@ -22,19 +21,19 @@ export const useAuthStore = create<AuthState>()(
             body: JSON.stringify({ username, password }),
           });
           
-          console.log('📡 Auth store: API response status:', response.status);
+          console.log('Auth: API response status:', response.status);
           
           if (!response.ok) {
             const errorData = await response.json();
-            console.error('❌ Auth store: API error:', errorData);
+            console.error('Auth: API error:', errorData);
             throw new Error(errorData.error || 'Authentication failed');
           }
           
           const result = await response.json();
-          console.log('✅ Auth store: API login successful, result:', result);
+          console.log('Auth: Login successful for user:', result.username);
           
           if (!result.uid) {
-            console.error('❌ Auth store: No UID in result:', result);
+            console.error('Auth: No UID in result');
             return false;
           }
           
@@ -49,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
             partner_id: result.partner_id,
           };
           
-          console.log('💾 Auth store: Setting authentication state...');
+          console.log('Auth: Setting authentication state');
           set({
             isAuthenticated: true,
             user: user,
@@ -65,14 +64,10 @@ export const useAuthStore = create<AuthState>()(
             }));
           }
           
-          console.log('✅ Auth store: Login completed successfully!');
+          console.log('Auth: Login completed successfully');
           return true;
         } catch (error: any) {
-          console.error('💥 Auth store: Login failed with error:', error);
-          console.error('🔍 Auth store: Error details:', {
-            message: error.message,
-            stack: error.stack?.substring(0, 200)
-          });
+          console.error('Auth: Login failed:', error.message);
           
           set({
             isAuthenticated: false,
@@ -84,13 +79,13 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         try {
-          console.log('🚪 Auth store: Logging out...');
+          console.log('Auth: Logging out user');
           
           // Call logout API if available
           try {
             await fetch('/api/auth/logout', { method: 'POST' });
           } catch (error) {
-            console.warn('⚠️ Auth store: Logout API error:', error);
+            console.warn('Auth: Logout API error:', error);
           }
           
           // Clear localStorage
@@ -98,9 +93,9 @@ export const useAuthStore = create<AuthState>()(
             localStorage.removeItem('odoo_session');
           }
           
-          console.log('✅ Auth store: Logout successful');
+          console.log('Auth: Logout completed');
         } catch (error) {
-          console.warn('⚠️ Auth store: Logout error:', error);
+          console.warn('Auth: Logout error:', error);
         } finally {
           set({
             isAuthenticated: false,
@@ -112,19 +107,15 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: (): boolean => {
         const { isAuthenticated } = get();
         
-        console.log(`🔍 Auth store: Current auth state: ${isAuthenticated}`);
-        
         if (!isAuthenticated) {
           // Try to restore session from localStorage
-          console.log('🔄 Auth store: Trying to restore session...');
-          
           if (typeof window !== 'undefined') {
             try {
               const stored = localStorage.getItem('odoo_session');
               if (stored) {
                 const session = JSON.parse(stored);
                 if (session.uid && session.sessionId) {
-                  console.log('✅ Auth store: Session restored successfully');
+                  console.log('Auth: Session restored for user:', session.username);
                   set({ 
                     isAuthenticated: true,
                     user: {
@@ -139,11 +130,9 @@ export const useAuthStore = create<AuthState>()(
                 }
               }
             } catch (error) {
-              console.warn('⚠️ Auth store: Failed to restore session:', error);
+              console.warn('Auth: Failed to restore session:', error);
             }
           }
-          
-          console.log('❌ Auth store: No session to restore');
         }
         
         return isAuthenticated;
