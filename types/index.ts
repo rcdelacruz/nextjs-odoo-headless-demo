@@ -5,6 +5,8 @@ export interface OdooLoginResponse {
   username: string;
   user_context: Record<string, any>;
   db: string;
+  name?: string;
+  partner_id?: number;
 }
 
 export interface OdooError {

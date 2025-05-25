@@ -23,9 +23,9 @@ class OdooAPIService {
 
     // Request interceptor
     this.api.interceptors.request.use((config) => {
-      console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
-      console.log('📤 Request data:', config.data);
-      console.log('🔗 Base URL:', config.baseURL);
+      console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      console.log('Request data:', config.data);
+      console.log('Base URL:', config.baseURL);
       
       config.headers = {
         ...config.headers,
@@ -37,13 +37,13 @@ class OdooAPIService {
     // Response interceptor
     this.api.interceptors.response.use(
       (response) => {
-        console.log(`✅ API Response: ${response.status}`);
-        console.log('📥 Response data:', response.data);
+        console.log(`API Response: ${response.status}`);
+        console.log('Response data:', response.data);
         return response;
       },
       (error) => {
-        console.error(`❌ API Error:`, error.message);
-        console.error('🔍 Error details:', {
+        console.error(`API Error:`, error.message);
+        console.error('Error details:', {
           status: error.response?.status,
           statusText: error.response?.statusText,
           data: error.response?.data,
@@ -87,11 +87,11 @@ class OdooAPIService {
   // Authentication
   async login(username: string, password: string): Promise<OdooLoginResponse> {
     try {
-      console.log(`🔐 Starting login process...`);
-      console.log(`👤 Username: ${username}`);
-      console.log(`🔗 Odoo URL: ${ODOO_CONFIG.baseURL}`);
-      console.log(`🗄️ Database: ${ODOO_CONFIG.database}`);
-      console.log(`📡 Endpoint: ${ODOO_CONFIG.endpoints.login}`);
+      console.log(`Starting login process...`);
+      console.log(`Username: ${username}`);
+      console.log(`Odoo URL: ${ODOO_CONFIG.baseURL}`);
+      console.log(`Database: ${ODOO_CONFIG.database}`);
+      console.log(`Endpoint: ${ODOO_CONFIG.endpoints.login}`);
 
       const loginData = {
         jsonrpc: '2.0',
@@ -103,26 +103,26 @@ class OdooAPIService {
         },
       };
 
-      console.log('📤 Login payload:', { ...loginData, params: { ...loginData.params, password: '***' } });
+      console.log('Login payload:', { ...loginData, params: { ...loginData.params, password: '***' } });
 
       const response: AxiosResponse = await this.api.post(ODOO_CONFIG.endpoints.login, loginData);
 
-      console.log('📊 Raw login response:', response.data);
+      console.log('Raw login response:', response.data);
 
       if (response.data.error) {
-        console.error('🚫 Odoo returned error:', response.data.error);
+        console.error('Odoo returned error:', response.data.error);
         throw new Error(response.data.error.message || 'Authentication failed');
       }
 
       const result = response.data.result;
       
       if (!result) {
-        console.error('🚫 No result in response');
+        console.error('No result in response');
         throw new Error('No result returned from Odoo');
       }
 
       if (!result.uid) {
-        console.error('🚫 No UID in response, login failed');
+        console.error('No UID in response, login failed');
         console.error('Result object:', result);
         throw new Error('Invalid credentials - no user ID returned');
       }
@@ -130,11 +130,11 @@ class OdooAPIService {
       this.sessionId = result.session_id;
       this.uid = result.uid;
 
-      console.log(`✅ Login successful!`);
-      console.log(`👤 UID: ${result.uid}`);
-      console.log(`🔑 Session: ${result.session_id?.substring(0, 10)}...`);
-      console.log(`👤 Username: ${result.username}`);
-      console.log(`🗄️ Database: ${result.db}`);
+      console.log(`Login successful!`);
+      console.log(`UID: ${result.uid}`);
+      console.log(`Session: ${result.session_id?.substring(0, 10)}...`);
+      console.log(`Username: ${result.username}`);
+      console.log(`Database: ${result.db}`);
 
       // Store session in localStorage
       if (typeof window !== 'undefined') {
@@ -145,19 +145,19 @@ class OdooAPIService {
           db: result.db,
         };
         localStorage.setItem('odoo_session', JSON.stringify(sessionData));
-        console.log('💾 Session stored in localStorage');
+        console.log('Session stored in localStorage');
       }
 
       return result;
     } catch (error: any) {
-      console.error('💥 Login failed with error:', error);
+      console.error('Login failed with error:', error);
       
       if (error.code === 'ECONNREFUSED') {
-        console.error('🔌 Connection refused - Odoo server may not be running');
+        console.error('Connection refused - Odoo server may not be running');
       } else if (error.code === 'ETIMEDOUT') {
-        console.error('⏰ Connection timeout - Odoo server may be slow or unreachable');
+        console.error('Connection timeout - Odoo server may be slow or unreachable');
       } else if (error.response?.status === 404) {
-        console.error('🔍 404 Not Found - Check if the endpoint URL is correct');
+        console.error('404 Not Found - Check if the endpoint URL is correct');
       }
       
       throw this.formatError(error);
@@ -166,15 +166,15 @@ class OdooAPIService {
 
   async logout(): Promise<void> {
     try {
-      console.log('🚪 Logging out...');
+      console.log('Logging out...');
       await this.api.post(ODOO_CONFIG.endpoints.logout, {
         jsonrpc: '2.0',
         method: 'call',
         params: {},
       });
-      console.log('✅ Logout successful');
+      console.log('Logout successful');
     } catch (error) {
-      console.warn('⚠️ Logout error:', error);
+      console.warn('Logout error:', error);
     } finally {
       this.clearSession();
     }
@@ -184,7 +184,7 @@ class OdooAPIService {
   restoreSession(): boolean {
     try {
       if (typeof window === 'undefined') {
-        console.log('🔄 SSR detected, skipping session restore');
+        console.log('SSR detected, skipping session restore');
         return false;
       }
       
@@ -193,13 +193,13 @@ class OdooAPIService {
         const session = JSON.parse(stored);
         this.sessionId = session.sessionId;
         this.uid = session.uid;
-        console.log(`🔄 Session restored: UID ${session.uid}`);
+        console.log(`Session restored: UID ${session.uid}`);
         return true;
       } else {
-        console.log('🔄 No stored session found');
+        console.log('No stored session found');
       }
     } catch (error) {
-      console.warn('⚠️ Failed to restore session:', error);
+      console.warn('Failed to restore session:', error);
     }
     return false;
   }
@@ -207,7 +207,7 @@ class OdooAPIService {
   // Check if authenticated
   isAuthenticated(): boolean {
     const authenticated = !!(this.sessionId && this.uid);
-    console.log(`🔍 Auth check: ${authenticated ? 'authenticated' : 'not authenticated'}`);
+    console.log(`Auth check: ${authenticated ? 'authenticated' : 'not authenticated'}`);
     return authenticated;
   }
 
@@ -216,7 +216,7 @@ class OdooAPIService {
     model: string,
     params: OdooSearchParams = {}
   ): Promise<OdooListResponse<T>> {
-    console.log(`🔍 Searching ${model} with params:`, params);
+    console.log(`Searching ${model} with params:`, params);
     
     const response = await this.api.post(ODOO_CONFIG.endpoints.search_read, {
       jsonrpc: '2.0',
@@ -240,7 +240,7 @@ class OdooAPIService {
       length: response.data.result.length,
     };
     
-    console.log(`📋 Found ${result.records.length} records`);
+    console.log(`Found ${result.records.length} records`);
     return result;
   }
 

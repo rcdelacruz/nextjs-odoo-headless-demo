@@ -13,16 +13,16 @@ export default function DebugPage() {
 
   const testConnection = async () => {
     setResults([]);
-    addLog('🔄 Starting connection test...');
+    addLog('Starting connection test...');
 
     // Test 1: Check environment variables
-    addLog(`📋 Environment check:`);
+    addLog(`Environment check:`);
     addLog(`  ODOO_BASE_URL: ${process.env.NEXT_PUBLIC_ODOO_BASE_URL || 'undefined'}`);
     addLog(`  ODOO_DATABASE: ${process.env.NEXT_PUBLIC_ODOO_DATABASE || 'undefined'}`);
 
     // Test 2: Direct fetch to Odoo
     try {
-      addLog('🔌 Testing direct connection to Odoo...');
+      addLog('Testing direct connection to Odoo...');
       const odooUrl = process.env.NEXT_PUBLIC_ODOO_BASE_URL || 'http://localhost:8069';
       
       const response = await fetch(`${odooUrl}/web/session/authenticate`, {
@@ -41,27 +41,27 @@ export default function DebugPage() {
         })
       });
 
-      addLog(`📡 Response status: ${response.status}`);
+      addLog(`Response status: ${response.status}`);
       
       if (response.ok) {
         const data = await response.json();
-        addLog(`✅ Odoo is reachable!`);
-        addLog(`📊 Response: ${JSON.stringify(data, null, 2)}`);
+        addLog(`Odoo is reachable!`);
+        addLog(`Response: ${JSON.stringify(data, null, 2)}`);
       } else {
-        addLog(`❌ HTTP error: ${response.status} ${response.statusText}`);
+        addLog(`HTTP error: ${response.status} ${response.statusText}`);
       }
     } catch (error: any) {
-      addLog(`💥 Connection failed: ${error.message}`);
+      addLog(`Connection failed: ${error.message}`);
       
       if (error.message.includes('CORS')) {
-        addLog('🚨 CORS issue detected - this is common with localhost development');
+        addLog('CORS issue detected - this is common with localhost development');
       } else if (error.message.includes('fetch')) {
-        addLog('🔌 Network error - check if Odoo is running on the specified URL');
+        addLog('Network error - check if Odoo is running on the specified URL');
       }
     }
 
     // Test 3: Check if Next.js env vars are properly set
-    addLog('🔍 Checking Next.js configuration...');
+    addLog('Checking Next.js configuration...');
     if (typeof window !== 'undefined') {
       addLog(`  Window location: ${window.location.origin}`);
       addLog(`  User agent: ${navigator.userAgent.slice(0, 50)}...`);
@@ -70,14 +70,14 @@ export default function DebugPage() {
 
   const testEnvVars = () => {
     setResults([]);
-    addLog('📋 Environment Variables Check:');
+    addLog('Environment Variables Check:');
     addLog(`NODE_ENV: ${process.env.NODE_ENV}`);
     addLog(`NEXT_PUBLIC_ODOO_BASE_URL: ${process.env.NEXT_PUBLIC_ODOO_BASE_URL || 'NOT SET'}`);
     addLog(`NEXT_PUBLIC_ODOO_DATABASE: ${process.env.NEXT_PUBLIC_ODOO_DATABASE || 'NOT SET'}`);
     
     // Check .env.local
     addLog('');
-    addLog('💡 Make sure your .env.local file has:');
+    addLog('Make sure your .env.local file has:');
     addLog('NEXT_PUBLIC_ODOO_BASE_URL=http://localhost:8069');
     addLog('NEXT_PUBLIC_ODOO_DATABASE=your_database_name');
     addLog('ODOO_USERNAME=admin');
@@ -88,7 +88,7 @@ export default function DebugPage() {
     <div className="container mx-auto py-8 px-4">
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle>🔧 Odoo Connection Debug Tool</CardTitle>
+          <CardTitle>Odoo Connection Debug Tool</CardTitle>
           <p className="text-gray-600">
             Use this page to debug connection issues with Odoo
           </p>
@@ -96,13 +96,13 @@ export default function DebugPage() {
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <Button onClick={testConnection}>
-              🔌 Test Odoo Connection
+              Test Odoo Connection
             </Button>
             <Button onClick={testEnvVars} variant="outline">
-              📋 Check Environment
+              Check Environment
             </Button>
             <Button onClick={() => setResults([])} variant="outline">
-              🗑️ Clear
+              Clear
             </Button>
           </div>
 
