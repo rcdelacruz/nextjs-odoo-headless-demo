@@ -1,7 +1,7 @@
 // Odoo Configuration
 export const ODOO_CONFIG = {
-  baseURL: process.env.ODOO_BASE_URL || 'http://localhost:8069',
-  database: process.env.ODOO_DATABASE || 'odoo',
+  baseURL: process.env.NEXT_PUBLIC_ODOO_BASE_URL || 'http://localhost:8069',
+  database: process.env.NEXT_PUBLIC_ODOO_DATABASE || 'odoo',
   timeout: 10000,
   endpoints: {
     login: '/web/session/authenticate',
