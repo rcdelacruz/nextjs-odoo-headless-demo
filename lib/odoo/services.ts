@@ -19,9 +19,9 @@ export class StudentService {
     return odooAPI.searchRead<Student>(this.model, {
       domain: [
         ['is_company', '=', false],
-        ['customer_rank', '>', 0], // Just get customer contacts as "students"
+        ['customer_rank', '>', 0], // Use Odoo 18 customer_rank field
       ],
-      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.partner],
+      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.student],
       limit,
       offset,
       order: 'name asc',
@@ -31,7 +31,7 @@ export class StudentService {
   static async getById(id: number): Promise<Student | null> {
     return odooAPI.getById<Student>(this.model, id, [
       ...COMMON_FIELDS.base,
-      ...COMMON_FIELDS.partner,
+      ...COMMON_FIELDS.student,
     ]);
   }
 
@@ -41,7 +41,7 @@ export class StudentService {
       email: data.email,
       phone: data.phone,
       is_company: false,
-      customer_rank: 1, // Mark as customer
+      customer_rank: 1, // Mark as customer using Odoo 18 field
       // Add student-specific fields if you have custom fields
       ...(data.student_id && { 'comment': `Student ID: ${data.student_id}` }),
     });
@@ -49,7 +49,7 @@ export class StudentService {
 
   static async update(id: number, data: Partial<StudentFormData>): Promise<boolean> {
     const updateData: Record<string, any> = {};
-    
+
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.phone) updateData.phone = data.phone;
@@ -72,7 +72,7 @@ export class StudentService {
         ['email', 'ilike', term],
         ['phone', 'ilike', term],
       ],
-      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.partner],
+      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.student],
       limit: 20,
     });
   }

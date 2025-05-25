@@ -1,14 +1,12 @@
 import type {
   OdooLoginResponse,
   OdooError,
-  OdooFilter,
   OdooSearchParams,
   OdooListResponse,
   OdooCreateResponse,
 } from '@/types';
 
 class OdooAPIService {
-  private sessionId: string | null = null;
   private uid: number | null = null;
 
   constructor() {
@@ -19,8 +17,8 @@ class OdooAPIService {
   private formatError(error: any): OdooError {
     if (error?.error) {
       return {
-        code: 400,
-        message: error.error,
+        code: error.error.code || 400,
+        message: error.error.message || error.error,
       };
     }
     return {
@@ -30,7 +28,6 @@ class OdooAPIService {
   }
 
   private clearSession() {
-    this.sessionId = null;
     this.uid = null;
     if (typeof window !== 'undefined') {
       localStorage.removeItem('odoo_session');
@@ -46,12 +43,10 @@ class OdooAPIService {
   async logout(): Promise<void> {
     try {
       console.log('Logging out...');
-      await fetch('/api/auth/logout', { method: 'POST' });
+      this.clearSession();
       console.log('Logout successful');
     } catch (error) {
       console.warn('Logout error:', error);
-    } finally {
-      this.clearSession();
     }
   }
 
@@ -62,11 +57,10 @@ class OdooAPIService {
         console.log('SSR detected, skipping session restore');
         return false;
       }
-      
+
       const stored = localStorage.getItem('odoo_session');
       if (stored) {
         const session = JSON.parse(stored);
-        this.sessionId = session.sessionId;
         this.uid = session.uid;
         console.log(`Session restored: UID ${session.uid}`);
         return true;
@@ -81,18 +75,18 @@ class OdooAPIService {
 
   // Check if authenticated
   isAuthenticated(): boolean {
-    const authenticated = !!(this.sessionId && this.uid);
+    const authenticated = !!(this.uid);
     console.log(`Auth check: ${authenticated ? 'authenticated' : 'not authenticated'}`);
     return authenticated;
   }
 
-  // Generic CRUD operations via Next.js API routes
+  // Generic CRUD operations via API routes (to avoid CORS)
   async searchRead<T>(
     model: string,
     params: OdooSearchParams = {}
   ): Promise<OdooListResponse<T>> {
     console.log(`Searching ${model} with params:`, params);
-    
+
     try {
       const response = await fetch('/api/odoo/operation', {
         method: 'POST',
@@ -116,8 +110,7 @@ class OdooAPIService {
       }
 
       const result = await response.json();
-      
-      // Handle different response formats
+
       if (result.records) {
         console.log(`Found ${result.records.length} records`);
         return {
@@ -145,6 +138,7 @@ class OdooAPIService {
 
   async create(model: string, data: Record<string, any>): Promise<OdooCreateResponse> {
     try {
+      console.log(`Creating ${model} with data:`, data);
       const response = await fetch('/api/odoo/operation', {
         method: 'POST',
         headers: {
@@ -154,7 +148,6 @@ class OdooAPIService {
           model: model,
           method: 'create',
           args: [data],
-          kwargs: {},
         }),
       });
 
@@ -164,6 +157,7 @@ class OdooAPIService {
       }
 
       const result = await response.json();
+      console.log(`Created record with ID: ${result}`);
       return { id: result };
     } catch (error) {
       console.error('Create operation failed:', error);
@@ -173,6 +167,7 @@ class OdooAPIService {
 
   async update(model: string, id: number, data: Record<string, any>): Promise<boolean> {
     try {
+      console.log(`Updating ${model} ID ${id} with data:`, data);
       const response = await fetch('/api/odoo/operation', {
         method: 'POST',
         headers: {
@@ -182,7 +177,6 @@ class OdooAPIService {
           model: model,
           method: 'write',
           args: [[id], data],
-          kwargs: {},
         }),
       });
 
@@ -192,6 +186,7 @@ class OdooAPIService {
       }
 
       const result = await response.json();
+      console.log(`Update result: ${result}`);
       return result;
     } catch (error) {
       console.error('Update operation failed:', error);
@@ -201,6 +196,7 @@ class OdooAPIService {
 
   async delete(model: string, id: number): Promise<boolean> {
     try {
+      console.log(`Deleting ${model} ID ${id}`);
       const response = await fetch('/api/odoo/operation', {
         method: 'POST',
         headers: {
@@ -210,7 +206,6 @@ class OdooAPIService {
           model: model,
           method: 'unlink',
           args: [[id]],
-          kwargs: {},
         }),
       });
 
@@ -220,6 +215,7 @@ class OdooAPIService {
       }
 
       const result = await response.json();
+      console.log(`Delete result: ${result}`);
       return result;
     } catch (error) {
       console.error('Delete operation failed:', error);
@@ -230,7 +226,7 @@ class OdooAPIService {
   // Get record by ID
   async getById<T>(model: string, id: number, fields?: string[]): Promise<T | null> {
     const result = await this.searchRead<T>(model, {
-      domain: [['id', '=', id]],
+      domain: [['id', '=', id]] as any,
       fields: fields,
       limit: 1,
     });

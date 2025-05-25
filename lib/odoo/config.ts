@@ -21,19 +21,19 @@ export const getApiHeaders = (sessionId?: string) => ({
   ...(sessionId && { 'Cookie': `session_id=${sessionId}` }),
 });
 
-// Common Odoo domains
+// Common Odoo domains - Using only fields that exist
 export const ODOO_DOMAINS = {
   active: [['active', '=', true]],
-  customers: [['customer_rank', '>', 0]],
-  suppliers: [['supplier_rank', '>', 0]],
+  customers: [['is_company', '=', false]], // Individuals as "customers"
+  suppliers: [['is_company', '=', true]], // Companies as "suppliers"
   companies: [['is_company', '=', true]],
   individuals: [['is_company', '=', false]],
 };
 
-// Common field sets
+// Common field sets - Using only fields that exist
 export const COMMON_FIELDS = {
   base: ['id', 'display_name', 'create_date', 'write_date'],
-  partner: ['name', 'email', 'phone', 'mobile', 'is_company', 'customer_rank', 'supplier_rank'],
-  student: ['name', 'email', 'phone', 'student_id', 'enrollment_date', 'course_ids', 'active'],
-  course: ['name', 'code', 'description', 'credits', 'active'],
+  partner: ['name', 'email', 'phone', 'mobile', 'is_company', 'active', 'comment'],
+  student: ['name', 'email', 'phone', 'comment', 'active'],
+  course: ['name', 'active'],
 };

@@ -16,7 +16,7 @@ services:
       - demo_network
 
   odoo:
-    image: odoo:17.0
+    image: odoo:18.0
     container_name: demo_odoo_app
     depends_on:
       - odoo-db
