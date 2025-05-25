@@ -14,31 +14,32 @@ A demo application showing how to use Next.js as a frontend for Odoo Community E
 
 ## 🛠️ Prerequisites
 
-1. **Running Odoo Instance**: You need Odoo Community Edition running (see docker-compose setup)
+1. **Running Odoo Instance**: You need Odoo Community Edition running
 2. **Node.js**: Version 18 or higher
 3. **npm/yarn**: Package manager
 
-## 📋 Setup Instructions
+## 📋 Quick Start
 
-### 1. Clone the Repository
+### Method 1: Use Your Existing Odoo (Recommended)
+
+If you already have Odoo running (like the one we set up earlier):
+
 ```bash
+# 1. Clone the repository
 git clone https://github.com/rcdelacruz/nextjs-odoo-headless-demo.git
 cd nextjs-odoo-headless-demo
-```
 
-### 2. Install Dependencies
-```bash
+# 2. Install dependencies
 npm install
-# or
-yarn install
-```
 
-### 3. Configure Environment Variables
-```bash
+# 3. Configure environment
 cp .env.local.example .env.local
+
+# 4. Edit .env.local with your Odoo settings
+nano .env.local
 ```
 
-Edit `.env.local` with your Odoo configuration:
+Edit `.env.local`:
 ```env
 ODOO_BASE_URL=http://localhost:8069
 ODOO_DATABASE=your_school_db
@@ -46,12 +47,91 @@ ODOO_USERNAME=admin@yourschool.com
 ODOO_PASSWORD=your_admin_password
 ```
 
-### 4. Start Development Server
+```bash
+# 5. Start the Next.js app
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
+
+### Method 2: Complete Stack with Docker
+
+If you want to start everything from scratch:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/rcdelacruz/nextjs-odoo-headless-demo.git
+cd nextjs-odoo-headless-demo
+
+# 2. Start just Odoo first (simpler than full stack)
+mkdir odoo-demo && cd odoo-demo
+
+# 3. Create simple docker-compose for Odoo
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+services:
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=odoo
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo123
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    volumes:
+      - odoo_db_data:/var/lib/postgresql/data
+
+  odoo:
+    image: odoo:17.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    environment:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoo123
+    volumes:
+      - odoo_web_data:/var/lib/odoo
+
+volumes:
+  odoo_db_data:
+  odoo_web_data:
+EOF
+
+# 4. Start Odoo
+docker-compose up -d
+
+# 5. Wait for Odoo to start, then go back to Next.js
+cd ..
+npm install
+cp .env.local.example .env.local
+```
+
+Edit `.env.local`:
+```env
+ODOO_BASE_URL=http://localhost:8069
+ODOO_DATABASE=odoo_demo
+ODOO_USERNAME=admin@demo.com
+ODOO_PASSWORD=admin
+```
+
 ```bash
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to see the app.
+### Setting Up Odoo Database
+
+1. Open http://localhost:8069
+2. Create database:
+   - Master Password: `admin`
+   - Database Name: `odoo_demo` (or whatever you put in .env.local)
+   - Email: `admin@demo.com`
+   - Password: `admin`
+   - Load demo data: ✅ **Yes**
+
+3. Now open http://localhost:3000 and login with:
+   - Username: `admin@demo.com`
+   - Password: `admin`
 
 ## 🏗️ Project Structure
 
@@ -76,7 +156,6 @@ Visit [http://localhost:3000](http://localhost:3000) to see the app.
 The app connects to Odoo using:
 - **REST API**: For standard CRUD operations
 - **JSON-RPC**: For authentication and complex queries
-- **XML-RPC**: For legacy operations (optional)
 
 ### Key API Services:
 - `OdooAuthService`: Handle login/logout
@@ -107,37 +186,28 @@ The app connects to Odoo using:
 - Contact information
 - Business details
 
-## 🔧 Configuration
-
-### Odoo Setup
-Make sure your Odoo instance has:
-1. **REST API enabled**
-2. **CORS configured** for localhost:3000
-3. **Database created** with demo data
-4. **User credentials** for API access
-
-### Development Settings
-```typescript
-// lib/odoo/config.ts
-export const ODOO_CONFIG = {
-  baseURL: process.env.ODOO_BASE_URL,
-  database: process.env.ODOO_DATABASE,
-  timeout: 10000,
-}
-```
-
 ## 🚀 Deployment
 
-### Vercel Deployment
+### Local Development
+```bash
+npm run dev
+```
+
+### Production Build
 ```bash
 npm run build
-vercel deploy
+npm start
 ```
 
 ### Docker Deployment
 ```bash
 docker build -t nextjs-odoo-demo .
-docker run -p 3000:3000 nextjs-odoo-demo
+docker run -p 3000:3000 \
+  -e ODOO_BASE_URL=http://your-odoo.com \
+  -e ODOO_DATABASE=your_db \
+  -e ODOO_USERNAME=your_user \
+  -e ODOO_PASSWORD=your_password \
+  nextjs-odoo-demo
 ```
 
 ## 🛡️ Security Considerations
@@ -163,8 +233,8 @@ This project is open source and available under the [MIT License](LICENSE).
 
 For questions and support:
 - Open an issue on GitHub
-- Check the Odoo documentation
-- Review the Next.js guides
+- Check the [SETUP.md](SETUP.md) for detailed setup instructions
+- Review the [FEATURES.md](FEATURES.md) for feature documentation
 
 ---
 
