@@ -3,7 +3,8 @@ import { persist } from 'zustand/middleware';
 import { odooAPI } from '@/lib/odoo/api';
 import type { AuthState, OdooLoginResponse } from '@/types';
 
-export const useAuthStore = create<AuthState>()(n  persist(
+export const useAuthStore = create<AuthState>()(
+  persist(
     (set, get) => ({
       isAuthenticated: false,
       user: null,
