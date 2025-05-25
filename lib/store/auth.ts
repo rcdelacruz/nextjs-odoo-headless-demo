@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { odooAPI } from '@/lib/odoo/api';
 import type { AuthState, OdooLoginResponse } from '@/types';
 
 export const useAuthStore = create<AuthState>()(
@@ -11,28 +10,60 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (username: string, password: string): Promise<boolean> => {
         try {
-          console.log('🔐 Auth store: Starting login process...');
+          console.log('🔐 Auth store: Starting login via Next.js API...');
           console.log(`👤 Auth store: Username: ${username}`);
           
-          const result: OdooLoginResponse = await odooAPI.login(username, password);
+          // Use Next.js API route instead of direct Odoo call (fixes CORS)
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+          });
           
-          console.log('✅ Auth store: Odoo login successful, result:', result);
+          console.log('📡 Auth store: API response status:', response.status);
           
-          if (!result) {
-            console.error('❌ Auth store: No result returned from odooAPI.login');
-            return false;
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ Auth store: API error:', errorData);
+            throw new Error(errorData.error || 'Authentication failed');
           }
+          
+          const result = await response.json();
+          console.log('✅ Auth store: API login successful, result:', result);
           
           if (!result.uid) {
             console.error('❌ Auth store: No UID in result:', result);
             return false;
           }
           
+          // Create compatible user object
+          const user: OdooLoginResponse = {
+            uid: result.uid,
+            username: result.username,
+            session_id: result.session_id,
+            db: result.db,
+            user_context: result.user_context || {},
+            name: result.name,
+            partner_id: result.partner_id,
+          };
+          
           console.log('💾 Auth store: Setting authentication state...');
           set({
             isAuthenticated: true,
-            user: result,
+            user: user,
           });
+          
+          // Store session in localStorage for persistence
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('odoo_session', JSON.stringify({
+              sessionId: result.session_id,
+              uid: result.uid,
+              username: result.username,
+              db: result.db,
+            }));
+          }
           
           console.log('✅ Auth store: Login completed successfully!');
           return true;
@@ -40,8 +71,6 @@ export const useAuthStore = create<AuthState>()(
           console.error('💥 Auth store: Login failed with error:', error);
           console.error('🔍 Auth store: Error details:', {
             message: error.message,
-            code: error.code,
-            data: error.data,
             stack: error.stack?.substring(0, 200)
           });
           
@@ -56,7 +85,19 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         try {
           console.log('🚪 Auth store: Logging out...');
-          await odooAPI.logout();
+          
+          // Call logout API if available
+          try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+          } catch (error) {
+            console.warn('⚠️ Auth store: Logout API error:', error);
+          }
+          
+          // Clear localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('odoo_session');
+          }
+          
           console.log('✅ Auth store: Logout successful');
         } catch (error) {
           console.warn('⚠️ Auth store: Logout error:', error);
@@ -76,14 +117,33 @@ export const useAuthStore = create<AuthState>()(
         if (!isAuthenticated) {
           // Try to restore session from localStorage
           console.log('🔄 Auth store: Trying to restore session...');
-          const restored = odooAPI.restoreSession();
-          if (restored) {
-            console.log('✅ Auth store: Session restored successfully');
-            set({ isAuthenticated: true });
-            return true;
-          } else {
-            console.log('❌ Auth store: No session to restore');
+          
+          if (typeof window !== 'undefined') {
+            try {
+              const stored = localStorage.getItem('odoo_session');
+              if (stored) {
+                const session = JSON.parse(stored);
+                if (session.uid && session.sessionId) {
+                  console.log('✅ Auth store: Session restored successfully');
+                  set({ 
+                    isAuthenticated: true,
+                    user: {
+                      uid: session.uid,
+                      username: session.username,
+                      session_id: session.sessionId,
+                      db: session.db,
+                      user_context: {},
+                    }
+                  });
+                  return true;
+                }
+              }
+            } catch (error) {
+              console.warn('⚠️ Auth store: Failed to restore session:', error);
+            }
           }
+          
+          console.log('❌ Auth store: No session to restore');
         }
         
         return isAuthenticated;
