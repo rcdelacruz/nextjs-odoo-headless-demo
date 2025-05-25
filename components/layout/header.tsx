@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth';
 import { Button } from '@/components/ui/button';
-import { UserIcon, LogOutIcon } from '@heroicons/react/24/outline';
+import { UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 export function Header() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export function Header() {
               </span>
             </div>
             <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOutIcon className="w-4 h-4 mr-2" />
+              <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2" />
               Logout
             </Button>
           </div>
