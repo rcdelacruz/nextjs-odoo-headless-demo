@@ -1,163 +1,133 @@
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
+
+const ODOO_BASE_URL = process.env.NEXT_PUBLIC_ODOO_BASE_URL || 'http://localhost:8069';
+const ODOO_DATABASE = process.env.NEXT_PUBLIC_ODOO_DATABASE || 'test';
 
 export async function POST(request: NextRequest) {
   try {
     const { model, method, args, kwargs, domain, fields, limit, offset, order } = await request.json();
 
-    console.log('API Route: Demo mode - returning mock data for:', { model, method });
+    console.log('API Route: Processing Odoo request:', { model, method });
+    console.log('API Route: Odoo URL:', ODOO_BASE_URL);
+    console.log('API Route: Database:', ODOO_DATABASE);
     console.log('API Route: Domain:', domain);
 
-    // DEMO MODE ONLY - Always return mock data
-    // This ensures the demo works without any Odoo setup
-    
-    if (method === 'search_read' && model === 'res.partner') {
-      console.log('API Route: Returning mock partner data');
-      
-      // Check domain to determine what type of partners to return
-      const isCustomer = domain?.some((d: any) => Array.isArray(d) && d[0] === 'customer_rank' && d[1] === '>' && d[2] === 0);
-      const isSupplier = domain?.some((d: any) => Array.isArray(d) && d[0] === 'supplier_rank' && d[1] === '>' && d[2] === 0);
-      
-      let mockData = [];
-      
-      if (isCustomer) {
-        mockData = [
-          {
-            id: 1,
-            name: 'John Doe',
-            email: 'john@demo.com',
-            phone: '+1234567890',
-            is_company: false,
-            customer_rank: 1,
-            supplier_rank: 0,
-            create_date: '2024-01-01 10:00:00',
+    // Prepare the request based on method
+    let endpoint = '/web/dataset/call_kw';
+    let requestData: any;
+
+    if (method === 'search_read') {
+      // Use the correct endpoint for search_read
+      endpoint = '/web/dataset/search_read';
+      requestData = {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: model,
+          domain: domain || [],
+          fields: fields || [],
+          limit: limit || 80,
+          offset: offset || 0,
+          sort: order || '',
+        },
+      };
+    } else {
+      // Use call_kw for other methods (create, write, unlink)
+      requestData = {
+        jsonrpc: '2.0',
+        method: 'call',
+        params: {
+          model: model,
+          method: method,
+          args: args || [],
+          kwargs: kwargs || {},
+        },
+      };
+    }
+
+    console.log('API Route: Sending request to:', `${ODOO_BASE_URL}${endpoint}`);
+    console.log('API Route: Request data:', JSON.stringify(requestData, null, 2));
+
+    try {
+      const response = await axios.post(
+        `${ODOO_BASE_URL}${endpoint}`,
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
           },
-          {
-            id: 2,
-            name: 'Jane Smith',
-            email: 'jane@demo.com',
-            phone: '+0987654321',
-            is_company: false,
-            customer_rank: 1,
-            supplier_rank: 0,
-            create_date: '2024-01-02 11:00:00',
-          },
-          {
-            id: 4,
-            name: 'Demo Corporation',
-            email: 'info@democorp.com',
-            phone: '+1122334455',
-            is_company: true,
-            customer_rank: 1,
-            supplier_rank: 0,
-            create_date: '2024-01-04 13:00:00',
-          },
-        ];
-      } else if (isSupplier) {
-        mockData = [
-          {
-            id: 3,
-            name: 'Supplier Inc',
-            email: 'supplier@demo.com',
-            phone: '+5566778899',
-            is_company: true,
-            customer_rank: 0,
-            supplier_rank: 1,
-            create_date: '2024-01-03 12:00:00',
-          },
-          {
-            id: 5,
-            name: 'Office Supplies Co',
-            email: 'office@supplies.com',
-            phone: '+9988776655',
-            is_company: true,
-            customer_rank: 0,
-            supplier_rank: 1,
-            create_date: '2024-01-05 14:00:00',
-          },
-        ];
-      } else {
-        // Return all records for general search (students)
-        mockData = [
-          {
-            id: 1,
-            name: 'John Doe',
-            email: 'john@demo.com',
-            phone: '+1234567890',
-            is_company: false,
-            customer_rank: 1,
-            supplier_rank: 0,
-            create_date: '2024-01-01 10:00:00',
-          },
-          {
-            id: 2,
-            name: 'Jane Smith',
-            email: 'jane@demo.com',
-            phone: '+0987654321',
-            is_company: false,
-            customer_rank: 1,
-            supplier_rank: 0,
-            create_date: '2024-01-02 11:00:00',
-          },
-          {
-            id: 6,
-            name: 'Mike Johnson',
-            email: 'mike@demo.com',
-            phone: '+1357924680',
-            is_company: false,
-            customer_rank: 1,
-            supplier_rank: 0,
-            create_date: '2024-01-06 15:00:00',
-          },
-        ];
+          timeout: 10000,
+        }
+      );
+
+      console.log('API Route: Odoo response status:', response.status);
+      console.log('API Route: Odoo response data:', response.data);
+
+      if (response.data.error) {
+        console.error('API Route: Odoo returned error:', response.data.error);
+        return NextResponse.json(
+          { error: response.data.error.message || 'Odoo operation failed' },
+          { status: 400 }
+        );
       }
 
-      return NextResponse.json({
-        records: mockData,
-        length: mockData.length,
-      });
-    }
+      // Handle different response formats
+      const result = response.data.result;
+      
+      if (method === 'search_read') {
+        // search_read returns records directly or in a wrapper
+        if (result && Array.isArray(result.records)) {
+          return NextResponse.json({
+            records: result.records,
+            length: result.length || result.records.length,
+          });
+        } else if (Array.isArray(result)) {
+          return NextResponse.json({
+            records: result,
+            length: result.length,
+          });
+        } else {
+          return NextResponse.json({
+            records: [],
+            length: 0,
+          });
+        }
+      } else {
+        // For create, write, unlink - return the result directly
+        return NextResponse.json(result);
+      }
 
-    if (method === 'create' && model === 'res.partner') {
-      console.log('API Route: Mock create partner');
-      const newId = Math.floor(Math.random() * 1000) + 100;
-      return NextResponse.json(newId);
-    }
+    } catch (axiosError: any) {
+      console.error('API Route: Axios error:', axiosError.message);
+      console.error('API Route: Error response:', axiosError.response?.data);
+      console.error('API Route: Error status:', axiosError.response?.status);
+      
+      if (axiosError.response?.status === 404) {
+        return NextResponse.json(
+          { error: 'Odoo endpoint not found. Check your Odoo URL and make sure the web interface is accessible.' },
+          { status: 404 }
+        );
+      }
+      
+      if (axiosError.code === 'ECONNREFUSED') {
+        return NextResponse.json(
+          { error: 'Cannot connect to Odoo server. Make sure Odoo is running and accessible.' },
+          { status: 503 }
+        );
+      }
 
-    if (method === 'write' && model === 'res.partner') {
-      console.log('API Route: Mock update partner');
-      return NextResponse.json(true);
+      return NextResponse.json(
+        { error: `Odoo connection failed: ${axiosError.message}` },
+        { status: 500 }
+      );
     }
-
-    if (method === 'unlink' && model === 'res.partner') {
-      console.log('API Route: Mock delete partner');
-      return NextResponse.json(true);
-    }
-
-    // Default fallback for any other operations
-    console.log('API Route: Default mock response for:', method);
-    return NextResponse.json({
-      records: [],
-      length: 0,
-    });
 
   } catch (error: any) {
-    console.error('API Route: Error in demo mode:', error.message);
-    
-    // Always return success in demo mode
-    return NextResponse.json({
-      records: [
-        {
-          id: 999,
-          name: 'Demo User',
-          email: 'demo@example.com',
-          phone: '+1234567890',
-          is_company: false,
-          customer_rank: 1,
-          supplier_rank: 0,
-          create_date: '2024-01-01 10:00:00',
-        },
-      ],
-      length: 1,
-    });
+    console.error('API Route: General error:', error.message);
+    return NextResponse.json(
+      { error: `API error: ${error.message}` },
+      { status: 500 }
+    );
   }
 }
