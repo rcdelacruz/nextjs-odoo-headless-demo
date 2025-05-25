@@ -6,13 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Loading } from '@/components/ui/loading';
 import { StudentService } from '@/lib/odoo/services';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+
+// Helper function to parse enhanced student data from comment field
+function parseStudentData(comment: string) {
+  const data: any = {};
+  if (!comment) return data;
+
+  const parts = comment.split(' | ');
+  parts.forEach(part => {
+    if (part.includes('Student ID:')) data.student_id = part.split('Student ID:')[1]?.trim();
+    if (part.includes('Grade:')) data.grade_level = part.split('Grade:')[1]?.trim();
+    if (part.includes('Section:')) data.section = part.split('Section:')[1]?.trim();
+    if (part.includes('Guardian:') && !part.includes('Guardian Phone:') && !part.includes('Guardian Email:')) {
+      data.guardian_name = part.split('Guardian:')[1]?.trim();
+    }
+    if (part.includes('Guardian Phone:')) data.guardian_phone = part.split('Guardian Phone:')[1]?.trim();
+    if (part.includes('Guardian Email:')) data.guardian_email = part.split('Guardian Email:')[1]?.trim();
+    if (part.includes('Birth Date:')) data.birth_date = part.split('Birth Date:')[1]?.trim();
+    if (part.includes('Emergency:')) data.emergency_contact = part.split('Emergency:')[1]?.trim();
+    if (part.includes('Enrolled:')) data.enrollment_date = part.split('Enrolled:')[1]?.trim();
+  });
+
+  return data;
+}
 import {
   PlusIcon,
   UserIcon,
   EnvelopeIcon,
   PhoneIcon,
   AcademicCapIcon,
-  CalendarIcon
+  CalendarIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
 import type { Student } from '@/types';
 
@@ -60,19 +84,19 @@ export function StudentList({ onAddStudent }: StudentListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Students</h2>
-          <p className="text-gray-600 mt-1">Manage student records</p>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div className="mb-6 lg:mb-0">
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">Students</h2>
+          <p className="text-slate-600">Manage student enrollment and information</p>
         </div>
         {onAddStudent && (
-          <Button
+          <button
             onClick={onAddStudent}
             className="btn-primary flex items-center"
           >
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Add Student
-          </Button>
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Add New Student
+          </button>
         )}
       </div>
 
@@ -87,52 +111,91 @@ export function StudentList({ onAddStudent }: StudentListProps) {
               Get started by adding your first student to the system.
             </p>
             {onAddStudent && (
-              <Button
+              <button
                 onClick={onAddStudent}
                 className="btn-primary flex items-center"
               >
-                <PlusIcon className="w-4 h-4 mr-2" />
+                <PlusIcon className="w-5 h-5 mr-2" />
                 Add Your First Student
-              </Button>
+              </button>
             )}
           </div>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {students.map((student) => (
-            <div key={student.id} className="card p-4">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <AcademicCapIcon className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{student.name}</h3>
-                  <span className="badge-info">Student</span>
-                </div>
-              </div>
+          {students.map((student) => {
+            // Parse enhanced data from comment field
+            const enhancedData = parseStudentData(student.comment || '');
 
-              <div className="space-y-2 text-sm">
-                {student.email && (
-                  <div className="flex items-center text-gray-600">
-                    <EnvelopeIcon className="w-4 h-4 mr-2 text-gray-400" />
-                    <span>{student.email}</span>
+            return (
+              <div key={student.id} className="card-interactive p-6 group">
+                <div className="flex items-center space-x-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <AcademicCapIcon className="w-7 h-7 text-white" />
                   </div>
-                )}
-                {student.phone && (
-                  <div className="flex items-center text-gray-600">
-                    <PhoneIcon className="w-4 h-4 mr-2 text-gray-400" />
-                    <span>{student.phone}</span>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{student.name}</h3>
+                    <span className="badge-info">Student</span>
                   </div>
-                )}
-                {student.create_date && (
-                  <div className="flex items-center text-gray-500">
-                    <CalendarIcon className="w-4 h-4 mr-2 text-gray-400" />
-                    <span className="text-xs">{formatDate(student.create_date)}</span>
+                </div>
+
+                <div className="space-y-3">
+                  {enhancedData.student_id && (
+                    <div className="flex items-center text-slate-600 bg-slate-50 rounded-lg p-3">
+                      <UserIcon className="w-5 h-5 mr-3 text-blue-500" />
+                      <span className="font-medium">ID: {enhancedData.student_id}</span>
+                    </div>
+                  )}
+                  {enhancedData.grade_level && (
+                    <div className="flex items-center text-gray-600">
+                      <AcademicCapIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>{enhancedData.grade_level} {enhancedData.section && `- Section ${enhancedData.section}`}</span>
+                    </div>
+                  )}
+                  {student.email && (
+                    <div className="flex items-center text-gray-600">
+                      <EnvelopeIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>{student.email}</span>
+                    </div>
+                  )}
+                  {student.phone && (
+                    <div className="flex items-center text-gray-600">
+                      <PhoneIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>{student.phone}</span>
+                    </div>
+                  )}
+                  {student.mobile && student.mobile !== student.phone && (
+                    <div className="flex items-center text-gray-600">
+                      <PhoneIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>Mobile: {student.mobile}</span>
+                    </div>
+                  )}
+                  {enhancedData.guardian_name && (
+                    <div className="flex items-center text-gray-600">
+                      <UserIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>Guardian: {enhancedData.guardian_name}</span>
+                    </div>
+                  )}
+                  {student.street && (
+                    <div className="flex items-center text-gray-600">
+                      <MapPinIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <span>{student.street}</span>
+                    </div>
+                  )}
+                  <div className="mt-2">
+                    <span className="badge-success">Enrolled</span>
+                    <span className="ml-2 badge-warning">Pending Payment</span>
                   </div>
-                )}
+                  {student.create_date && (
+                    <div className="flex items-center text-gray-500">
+                      <CalendarIcon className="w-4 h-4 mr-2 text-gray-400" />
+                      <span className="text-xs">Enrolled: {formatDate(student.create_date)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

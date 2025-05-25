@@ -63,9 +63,9 @@ export default function PartnersPage() {
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             Error loading partners: {error}
-            <Button variant="outline" size="sm" onClick={loadPartners} className="ml-2">
+            <button onClick={loadPartners} className="btn-outline ml-2 px-4 py-2 text-sm">
               Retry
-            </Button>
+            </button>
           </div>
         </main>
       </div>
@@ -77,14 +77,13 @@ export default function PartnersPage() {
       <Header />
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <Button
-            variant="outline"
+          <button
             onClick={() => router.push('/dashboard')}
-            className="mb-4"
+            className="btn-outline mb-4 flex items-center"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Dashboard
-          </Button>
+          </button>
           <h1 className="text-3xl font-bold text-gray-900">Partners</h1>
           <p className="text-gray-600 mt-2">
             Manage your customers and suppliers
@@ -98,7 +97,7 @@ export default function PartnersPage() {
               <UserGroupIcon className="w-5 h-5 mr-2" />
               Customers ({customers.length})
             </h2>
-            
+
             {customers.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
@@ -149,7 +148,7 @@ export default function PartnersPage() {
               <BuildingOfficeIcon className="w-5 h-5 mr-2" />
               Suppliers ({suppliers.length})
             </h2>
-            
+
             {suppliers.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">

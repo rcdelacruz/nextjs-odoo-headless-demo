@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Next.js Odoo Headless Demo',
-  description: 'A demo application showing Next.js integration with Odoo as headless ERP backend',
+  title: 'EduCore ERP - Educational Management System',
+  description: 'Comprehensive educational ERP system with student management, finance, HRIS, and supply chain modules powered by Odoo',
 };
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen pt-20">
           {children}
         </div>
       </body>
