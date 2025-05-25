@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
     const { model, method, args, kwargs, domain, fields, limit, offset, order } = await request.json();
 
     console.log('API Route: Demo mode - returning mock data for:', { model, method });
+    console.log('API Route: Domain:', domain);
 
     // DEMO MODE ONLY - Always return mock data
     // This ensures the demo works without any Odoo setup
@@ -13,9 +14,8 @@ export async function POST(request: NextRequest) {
       console.log('API Route: Returning mock partner data');
       
       // Check domain to determine what type of partners to return
-      const domain = request.body ? JSON.parse(await request.text()).domain : [];
-      const isCustomer = domain?.some((d: any) => d[0] === 'customer_rank' && d[1] === '>' && d[2] === 0);
-      const isSupplier = domain?.some((d: any) => d[0] === 'supplier_rank' && d[1] === '>' && d[2] === 0);
+      const isCustomer = domain?.some((d: any) => Array.isArray(d) && d[0] === 'customer_rank' && d[1] === '>' && d[2] === 0);
+      const isSupplier = domain?.some((d: any) => Array.isArray(d) && d[0] === 'supplier_rank' && d[1] === '>' && d[2] === 0);
       
       let mockData = [];
       
@@ -76,11 +76,11 @@ export async function POST(request: NextRequest) {
           },
         ];
       } else {
-        // Return all records for general search
+        // Return all records for general search (students)
         mockData = [
           {
             id: 1,
-            name: 'John Doe (Student)',
+            name: 'John Doe',
             email: 'john@demo.com',
             phone: '+1234567890',
             is_company: false,
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           },
           {
             id: 2,
-            name: 'Jane Smith (Student)',
+            name: 'Jane Smith',
             email: 'jane@demo.com',
             phone: '+0987654321',
             is_company: false,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
           },
           {
             id: 6,
-            name: 'Mike Johnson (Student)',
+            name: 'Mike Johnson',
             email: 'mike@demo.com',
             phone: '+1357924680',
             is_company: false,
