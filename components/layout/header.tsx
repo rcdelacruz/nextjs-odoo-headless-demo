@@ -10,7 +10,7 @@ export function Header() {
   const router = useRouter();
   const { user, logout, isAuthenticated, checkAuth } = useAuthStore();
 
-  // Force check auth on every render
+  // Check auth status
   const authStatus = checkAuth();
 
   const handleLogout = async () => {
@@ -19,17 +19,10 @@ export function Header() {
     router.push('/login');
   };
 
-  console.log('Header: Render state:', {
-    isAuthenticated,
-    authStatus,
-    user,
-    hasUser: !!user,
-  });
-
-  // Always show header for debugging - remove the auth check temporarily
-  // if (!isAuthenticated) {
-  //   return null;
-  // }
+  // Only show header if authenticated
+  if (!isAuthenticated && !authStatus) {
+    return null;
+  }
 
   return (
     <header className="bg-white border-b border-gray-200">
@@ -64,15 +57,12 @@ export function Header() {
             </Link>
           </nav>
 
-          {/* User menu - Always show for debugging */}
+          {/* User menu */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <UserIcon className="w-4 h-4 text-gray-500" />
               <span className="text-sm text-gray-700">
-                {user?.username || 'Not Logged In'}
-              </span>
-              <span className="text-xs text-gray-500">
-                (Auth: {isAuthenticated ? 'Yes' : 'No'})
+                {user?.username || user?.name || 'User'}
               </span>
             </div>
             <Button variant="outline" size="sm" onClick={handleLogout}>
