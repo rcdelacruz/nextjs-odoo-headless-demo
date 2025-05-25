@@ -8,16 +8,28 @@ import { UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline
 
 export function Header() {
   const router = useRouter();
-  const { user, logout, isAuthenticated } = useAuthStore();
+  const { user, logout, isAuthenticated, checkAuth } = useAuthStore();
+
+  // Force check auth on every render
+  const authStatus = checkAuth();
 
   const handleLogout = async () => {
+    console.log('Header: Logout button clicked');
     await logout();
     router.push('/login');
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  console.log('Header: Render state:', {
+    isAuthenticated,
+    authStatus,
+    user,
+    hasUser: !!user,
+  });
+
+  // Always show header for debugging - remove the auth check temporarily
+  // if (!isAuthenticated) {
+  //   return null;
+  // }
 
   return (
     <header className="bg-white border-b border-gray-200">
@@ -52,12 +64,15 @@ export function Header() {
             </Link>
           </nav>
 
-          {/* User menu */}
+          {/* User menu - Always show for debugging */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <UserIcon className="w-4 h-4 text-gray-500" />
               <span className="text-sm text-gray-700">
-                {user?.username || 'User'}
+                {user?.username || 'Not Logged In'}
+              </span>
+              <span className="text-xs text-gray-500">
+                (Auth: {isAuthenticated ? 'Yes' : 'No'})
               </span>
             </div>
             <Button variant="outline" size="sm" onClick={handleLogout}>
