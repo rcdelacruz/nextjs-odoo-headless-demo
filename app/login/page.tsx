@@ -47,9 +47,14 @@ export default function LoginPage() {
       console.log(`🎯 Login page: Login result: ${success}`);
       
       if (success) {
-        console.log('✅ Login page: Login successful, redirecting to dashboard...');
-        router.push('/dashboard');
-        console.log('📍 Login page: Router.push called');
+        console.log('✅ Login page: Login successful, waiting a moment for state update...');
+        
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          console.log('📍 Login page: Now redirecting to dashboard...');
+          router.push('/dashboard');
+        }, 100);
+        
       } else {
         console.log('❌ Login page: Login failed');
         setError('Invalid username or password');
