@@ -71,15 +71,15 @@ export default function LoginPage() {
 
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username (Email)
+                Username
               </label>
               <Input
                 id="username"
-                type="email"
+                type="text"
                 autoComplete="username"
                 {...register('username', { required: 'Username is required' })}
                 className="mt-1"
-                placeholder="admin@yourschool.com"
+                placeholder="admin"
               />
               {errors.username && (
                 <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
@@ -111,7 +111,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <div className="text-sm text-gray-600">
               <p>Default credentials (if using demo data):</p>
-              <p className="font-mono mt-1">admin@yourschool.com / admin</p>
+              <p className="font-mono mt-1">admin / admin</p>
             </div>
           </div>
         </CardContent>
