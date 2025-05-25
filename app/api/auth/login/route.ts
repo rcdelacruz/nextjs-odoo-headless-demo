@@ -8,9 +8,9 @@ export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
-    console.log('🔐 API Route: Login attempt for username:', username);
-    console.log('🔗 API Route: Odoo URL:', ODOO_BASE_URL);
-    console.log('🗄️ API Route: Database:', ODOO_DATABASE);
+    console.log('API Route: Login attempt for username:', username);
+    console.log('API Route: Odoo URL:', ODOO_BASE_URL);
+    console.log('API Route: Database:', ODOO_DATABASE);
 
     if (!username || !password) {
       return NextResponse.json(
@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    console.log('📊 API Route: Odoo response:', response.data);
+    console.log('API Route: Odoo response:', response.data);
 
     if (response.data.error) {
-      console.error('🚫 API Route: Odoo error:', response.data.error);
+      console.error('API Route: Odoo error:', response.data.error);
       return NextResponse.json(
         { error: response.data.error.message || 'Authentication failed' },
         { status: 401 }
@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
     const result = response.data.result;
     
     if (!result.uid) {
-      console.error('🚫 API Route: No UID in response');
+      console.error('API Route: No UID in response');
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    console.log('✅ API Route: Login successful for UID:', result.uid);
+    console.log('API Route: Login successful for UID:', result.uid);
 
     // Return user info (without sensitive data)
     return NextResponse.json({
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       partner_id: result.partner_id,
     });
   } catch (error: any) {
-    console.error('💥 API Route: Authentication error:', error.message);
+    console.error('API Route: Authentication error:', error.message);
     
     if (error.code === 'ECONNREFUSED') {
       return NextResponse.json(
