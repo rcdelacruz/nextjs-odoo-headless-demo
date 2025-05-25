@@ -14,12 +14,14 @@ export class StudentService {
   private static model = 'res.partner'; // Students are partners with specific category
 
   static async getAll(limit = 50, offset = 0): Promise<OdooListResponse<Student>> {
+    // Simplified query - just get individual partners that are customers
+    // In a real implementation, you'd filter by a student category or custom field
     return odooAPI.searchRead<Student>(this.model, {
       domain: [
         ['is_company', '=', false],
-        ['category_id.name', 'ilike', 'student'], // Assuming student category exists
+        ['customer_rank', '>', 0], // Just get customer contacts as "students"
       ],
-      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.student],
+      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.partner],
       limit,
       offset,
       order: 'name asc',
@@ -29,7 +31,7 @@ export class StudentService {
   static async getById(id: number): Promise<Student | null> {
     return odooAPI.getById<Student>(this.model, id, [
       ...COMMON_FIELDS.base,
-      ...COMMON_FIELDS.student,
+      ...COMMON_FIELDS.partner,
     ]);
   }
 
@@ -41,8 +43,7 @@ export class StudentService {
       is_company: false,
       customer_rank: 1, // Mark as customer
       // Add student-specific fields if you have custom fields
-      ...(data.student_id && { 'x_student_id': data.student_id }),
-      ...(data.enrollment_date && { 'x_enrollment_date': data.enrollment_date }),
+      ...(data.student_id && { 'comment': `Student ID: ${data.student_id}` }),
     });
   }
 
@@ -52,8 +53,7 @@ export class StudentService {
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.phone) updateData.phone = data.phone;
-    if (data.student_id) updateData['x_student_id'] = data.student_id;
-    if (data.enrollment_date) updateData['x_enrollment_date'] = data.enrollment_date;
+    if (data.student_id) updateData.comment = `Student ID: ${data.student_id}`;
 
     return odooAPI.update(this.model, id, updateData);
   }
@@ -66,13 +66,13 @@ export class StudentService {
     return odooAPI.searchRead<Student>(this.model, {
       domain: [
         ['is_company', '=', false],
-        ['category_id.name', 'ilike', 'student'],
+        ['customer_rank', '>', 0],
         '|', '|',
         ['name', 'ilike', term],
         ['email', 'ilike', term],
         ['phone', 'ilike', term],
       ],
-      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.student],
+      fields: [...COMMON_FIELDS.base, ...COMMON_FIELDS.partner],
       limit: 20,
     });
   }
