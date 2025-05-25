@@ -28,43 +28,28 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Check if already authenticated
-    console.log('🔍 Login page: Checking auth status...');
     if (checkAuth()) {
-      console.log('✅ Login page: Already authenticated, redirecting to dashboard');
       router.push('/dashboard');
     }
   }, [router, checkAuth]);
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('🔄 Login page: Form submitted');
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('🔐 Login page: Calling login function...');
       const success = await login(data.username, data.password);
       
-      console.log(`🎯 Login page: Login result: ${success}`);
-      
       if (success) {
-        console.log('✅ Login page: Login successful, waiting a moment for state update...');
-        
-        // Small delay to ensure state is updated
-        setTimeout(() => {
-          console.log('📍 Login page: Now redirecting to dashboard...');
-          router.push('/dashboard');
-        }, 100);
-        
+        console.log('✅ Login successful, redirecting to dashboard...');
+        router.push('/dashboard');
       } else {
-        console.log('❌ Login page: Login failed');
         setError('Invalid username or password');
       }
     } catch (err) {
-      console.error('💥 Login page: Exception during login:', err);
       setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
-      console.log('🏁 Login page: Login process completed');
     }
   };
 
